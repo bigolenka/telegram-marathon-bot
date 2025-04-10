@@ -1,0 +1,1 @@
+worker: python marathon_bot.py
