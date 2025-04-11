@@ -1,1 +1,1 @@
-worker: python marathon_bot.py
+worker: python3 marathon_bot.py
