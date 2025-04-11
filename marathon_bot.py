@@ -7,6 +7,7 @@ import csv
 import logging
 import os
 import re
+import psycopg2
 
 # Налаштування логування
 logging.basicConfig(level=logging.ERROR)
@@ -318,33 +319,56 @@ def handle_finish_location(message):
             markup_inline.add(website_button, already_registered_button)
             bot.send_message(chat_id, website_message, reply_markup=markup_inline)
             
-            # Запись данных в CSV файл
-            try:
-                with open(CSV_FILE, 'a', newline='', encoding='utf-8') as csvfile:
-                    writer = csv.writer(csvfile)
-                    if csvfile.tell() == 0:
-                        writer.writerow(['Chat ID', 'Имя', 'Фамилия', 'Дата рождения', 'Номер телефона', 'Время старта', 'Широта старта', 'Долгота старта', 'Время финиша', 'Широта финиша', 'Долгота финиша', 'Дистанция (км)'])
-                    writer.writerow([
-                        chat_id,
-                        user_data[chat_id].get('name', ''),
-                        user_data[chat_id].get('surname', ''),
-                        user_data[chat_id].get('birthdate', ''),
-                        user_data[chat_id].get('phone_number', ''),
-                        user_data[chat_id].get('start_time', ''),
-                        user_data[chat_id].get('start_location', ('', ''))[0],
-                        user_data[chat_id].get('start_location', ('', ''))[1],
-                        user_data[chat_id].get('finish_time', ''),
-                        user_data[chat_id].get('finish_location', ('', ''))[0],
-                        user_data[chat_id].get('finish_location', ('', ''))[1],
-                        user_data[chat_id].get('distance', '')
-                    ])
-                print(f"Данные пользователя {chat_id} записаны в {CSV_FILE}")
-            except Exception as e:
-                logger.error(f"Ошибка записи в CSV файл: {e}")
-                bot.send_message(chat_id, "Виникла помилка при збереженні результатів забігу." if language == 'uk' else "An error occurred while saving the run results.")
-        else:
-            error_message = "Помилка: не вдалося знайти дані про старт. Будь ласка, почніть забіг спочатку." if language == 'uk' else "Error: start data not found. Please start the run again."
-            bot.send_message(chat_id, error_message)
+            # Запис даних у базу даних PostgreSQL
+        DATABASE_URL = os.environ.get('DATABASE_URL')
+        try:
+            conn = psycopg2.connect(DATABASE_URL)
+            cur = conn.cursor()
+
+            insert_query = """
+                INSERT INTO marathon_results (
+                    chat_id, name, surname, birthdate, phone_number,
+                    start_time, start_latitude, start_longitude,
+                    finish_time, finish_latitude, finish_longitude, distance_km
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                ON CONFLICT (chat_id) DO UPDATE SET
+                    name = %s, surname = %s, birthdate = %s, phone_number = %s,
+                    start_time = %s, start_latitude = %s, start_longitude = %s,
+                    finish_time = %s, finish_latitude = %s, finish_longitude = %s, distance_km = %s;
+            """
+            data_to_insert = (
+                chat_id,
+                user_data[chat_id].get('name', ''),
+                user_data[chat_id].get('surname', ''),
+                user_data[chat_id].get('birthdate', ''),
+                user_data[chat_id].get('phone_number', ''),
+                user_data[chat_id].get('start_time', ''),
+                user_data[chat_id].get('start_location', ('', ''))[0],
+                user_data[chat_id].get('start_location', ('', ''))[1],
+                user_data[chat_id].get('finish_time', ''),
+                user_data[chat_id].get('finish_location', ('', ''))[0],
+                user_data[chat_id].get('finish_location', ('', ''))[1],
+                user_data[chat_id].get('distance', ''),
+                user_data[chat_id].get('name', ''), # Для ON CONFLICT
+                user_data[chat_id].get('surname', ''), # Для ON CONFLICT
+                user_data[chat_id].get('birthdate', ''), # Для ON CONFLICT
+                user_data[chat_id].get('phone_number', ''), # Для ON CONFLICT
+                user_data[chat_id].get('start_time', ''), # Для ON CONFLICT
+                user_data[chat_id].get('start_location', ('', ''))[0], # Для ON CONFLICT
+                user_data[chat_id].get('start_location', ('', ''))[1], # Для ON CONFLICT
+                user_data[chat_id].get('finish_time', ''), # Для ON CONFLICT
+                user_data[chat_id].get('finish_location', ('', ''))[0], # Для ON CONFLICT
+                user_data[chat_id].get('finish_location', ('', ''))[1], # Для ON CONFLICT
+                user_data[chat_id].get('distance', '') # Для ON CONFLICT
+            )
+            cur.execute(insert_query, data_to_insert)
+            conn.commit()
+            cur.close()
+            conn.close()
+            print(f"Дані користувача {chat_id} записано в базу даних PostgreSQL")
+        except psycopg2.Error as e:
+            logger.error(f"Помилка запису в базу даних PostgreSQL: {e}")
+            bot.send_message(chat_id, "Виникла помилка при збереженні результатів забігу." if language == 'uk' else "An error occurred while saving the run results.")
     else:
         print(f"Геолокация не получена для {chat_id}")
         bot.send_message(chat_id, "Будь ласка, надайте доступ до вашого місцезнаходження." if language == 'uk' else "Please grant access to your location.")
