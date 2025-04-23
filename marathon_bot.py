@@ -53,12 +53,18 @@ def process_language_selection(message):
 
     if language == "Українська":
         user_data[chat_id] = {'language': 'uk'}
-        bot.send_message(chat_id, "Ви обрали українську мову.", reply_markup=types.ReplyKeyboardRemove())
-        bot.register_next_step_handler(message, get_name)
+        markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+        skip_button = types.KeyboardButton("Пропустити")
+        markup.add(skip_button)
+        bot.send_message(chat_id, "Ви обрали українську мову.\nБудь ласка, введіть своє ім’я.", reply_markup=markup)
+        bot.register_next_step_handler(message, process_name)
     elif language == "English":
         user_data[chat_id] = {'language': 'en'}
-        bot.send_message(chat_id, "You have selected English.", reply_markup=types.ReplyKeyboardRemove())
-        bot.register_next_step_handler(message, get_name)
+        markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+        skip_button = types.KeyboardButton("Skip")
+        markup.add(skip_button)
+        bot.send_message(chat_id, "You have selected English.\nPlease enter your name.", reply_markup=markup)
+        bot.register_next_step_handler(message, process_name)
     else:
         markup = types.ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True)
         uk_button = types.KeyboardButton("Українська")
@@ -67,21 +73,6 @@ def process_language_selection(message):
         bot.send_message(chat_id, "Будь ласка, оберіть мову з наданих варіантів.\nPlease select a language from the options provided.", reply_markup=markup)
         bot.register_next_step_handler(message, process_language_selection)
         
-def get_name(message):
-    chat_id = message.chat.id
-    language = user_data[chat_id]['language']
-    if language == 'uk':
-        markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-        skip_button = types.KeyboardButton("Пропустити")
-        markup.add(skip_button)
-        bot.send_message(chat_id, "Будь ласка, введіть своє ім’я.", reply_markup=markup)
-    elif language == 'en':
-        markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-        skip_button = types.KeyboardButton("Skip")
-        markup.add(skip_button)
-        bot.send_message(chat_id, "Please enter your name.", reply_markup=markup)
-
-    bot.register_next_step_handler(message, process_name)
 
 def process_name(message):
     chat_id = message.chat.id
