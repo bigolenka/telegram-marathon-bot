@@ -368,7 +368,7 @@ def handle_finish_location(message):
             user_data[chat_id]['distance'] = distance
             distance_km = round(distance, 2)
             language = user_data[chat_id]['language']
-            finish_message = f"🇺🇦 Ваш забіг завершено! Подолана дистанція: {distance_km} км. Дякуємо за участь у «Марафоні Героїв»! 🇺🇦" if language == 'uk' else f"🇺🇦 Your run is finished! Distance covered: {distance_km} km. Thank you for participating in the «Heroes Marathon»! 🇺🇦"
+            finish_message = f"🇺🇦 Ваш забіг завершено! Дякуємо за участь у «Марафоні Героїв»! 🇺🇦" if language == 'uk' else f"🇺🇦 Your run is finished! Thank you for participating in the «Heroes Marathon»! 🇺🇦"
             bot.send_message(chat_id, finish_message, reply_markup=types.ReplyKeyboardRemove())
             
             website_message = "Щоб отримати сертифікат про участь у марафоні та нагороди, потрібно зареєструватись на нашому сайті. Для цього натисніть кнопку нижче (для кращої роботи рекомендуємо відкрити у зовнішньому браузері)." if language == 'uk' else "To receive a certificate of participation in the marathon and a reward, you need to register on our website. To do this, press the button below (for better performance, we recommend opening in an external browser)."
