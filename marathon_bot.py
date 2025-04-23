@@ -69,104 +69,162 @@ def process_language_selection(message):
 
 def get_name(message):
     chat_id = message.chat.id
-    name = message.text
     language = user_data[chat_id]['language']
-    if name.isalpha() and len(name) >= 2:
-        user_data[chat_id]['name'] = name
+    if language == 'uk':
+        markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+        skip_button = types.KeyboardButton("Пропустити")
+        markup.add(skip_button)
+        bot.send_message(chat_id, "Будь ласка, введіть своє ім’я.", reply_markup=markup)
+    elif language == 'en':
+        markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+        skip_button = types.KeyboardButton("Skip")
+        markup.add(skip_button)
+        bot.send_message(chat_id, "Please enter your name.", reply_markup=markup)
+    bot.register_next_step_handler(message, process_name)
+
+def process_name(message):
+    chat_id = message.chat.id
+    language = user_data[chat_id]['language']
+    if message.text == "Пропустити" or message.text == "Skip":
+        user_data[chat_id]['name'] = "Не вказано" if language == 'uk' else "Not provided"
+        ask_surname(message)
+    elif message.text.isalpha() and len(message.text) >= 2:
+        user_data[chat_id]['name'] = message.text
         ask_surname(message)
     else:
         if language == 'uk':
             bot.send_message(chat_id, "Будь ласка, введіть коректне ім'я (тільки літери, мінімум 2 символи).")
         elif language == 'en':
             bot.send_message(chat_id, "Please enter a valid name (letters only, minimum 2 characters).")
-        bot.register_next_step_handler(message, get_name)
+        bot.register_next_step_handler(message, process_name)
 
 def ask_surname(message):
     chat_id = message.chat.id
     language = user_data[chat_id]['language']
     if language == 'uk':
-        bot.send_message(chat_id, "Будь ласка, введіть своє прізвище.")
+        markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+        skip_button = types.KeyboardButton("Пропустити")
+        markup.add(skip_button)
+        bot.send_message(chat_id, "Будь ласка, введіть своє прізвище.", reply_markup=markup)
     elif language == 'en':
-        bot.send_message(chat_id, "Please enter your surname.")
-    bot.register_next_step_handler(message, get_surname)
+        markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+        skip_button = types.KeyboardButton("Skip")
+        markup.add(skip_button)
+        bot.send_message(chat_id, "Please enter your surname.", reply_markup=markup)
+    bot.register_next_step_handler(message, process_surname)
 
-def get_surname(message):
+def process_surname(message):
     chat_id = message.chat.id
-    surname = message.text
     language = user_data[chat_id]['language']
-    if surname.isalpha() and len(surname) >= 2:
-        user_data[chat_id]['surname'] = surname
+    if message.text == "Пропустити" or message.text == "Skip":
+        user_data[chat_id]['surname'] = "Не вказано" if language == 'uk' else "Not provided"
+        ask_birth_day(message)
+    elif message.text.isalpha() and len(message.text) >= 2:
+        user_data[chat_id]['surname'] = message.text
         ask_birth_day(message)
     else:
         if language == 'uk':
             bot.send_message(chat_id, "Будь ласка, введіть коректне прізвище (тільки літери, мінімум 2 символи).")
         elif language == 'en':
             bot.send_message(chat_id, "Please enter a valid surname (letters only, minimum 2 characters).")
-        bot.register_next_step_handler(message, get_surname)
+        bot.register_next_step_handler(message, process_surname)
 
 def ask_birth_day(message):
     chat_id = message.chat.id
     language = user_data[chat_id]['language']
     if language == 'uk':
-        bot.send_message(chat_id, "Будь ласка, введіть день свого народження (1-31):")
+        markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+        skip_button = types.KeyboardButton("Пропустити")
+        markup.add(skip_button)
+        bot.send_message(chat_id, "Будь ласка, введіть день свого народження (1-31):", reply_markup=markup)
     elif language == 'en':
-        bot.send_message(chat_id, "Please enter the day of your birth (1-31):")
-    bot.register_next_step_handler(message, get_birth_day)
+        markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+        skip_button = types.KeyboardButton("Skip")
+        markup.add(skip_button)
+        bot.send_message(chat_id, "Please enter the day of your birth (1-31):", reply_markup=markup)
+    bot.register_next_step_handler(message, process_birth_day)
 
-def get_birth_day(message):
+def process_birth_day(message):
     chat_id = message.chat.id
     language = user_data[chat_id]['language']
-    day = message.text
-    if day.isdigit() and 1 <= int(day) <= 31:
-        user_data[chat_id]['birth_day'] = day.zfill(2) # Добавляем ведущий ноль, если нужно
+    if message.text == "Пропустити" or message.text == "Skip":
+        user_data[chat_id]['birth_day'] = "00"
+        user_data[chat_id]['birth_month'] = "00"
+        user_data[chat_id]['birth_year'] = "0000"
+        user_data[chat_id]['birthdate'] = "00/00/0000"
+        ask_phone(message)
+    elif message.text.isdigit() and 1 <= int(message.text) <= 31:
+        user_data[chat_id]['birth_day'] = message.text.zfill(2)
         ask_birth_month(message)
     else:
         if language == 'uk':
             bot.send_message(chat_id, "Невірний формат дня. Будь ласка, введіть число від 1 до 31.")
         elif language == 'en':
             bot.send_message(chat_id, "Invalid day format. Please enter a number from 1 to 31.")
-        bot.register_next_step_handler(message, get_birth_day)
+        bot.register_next_step_handler(message, process_birth_day)
 
 def ask_birth_month(message):
     chat_id = message.chat.id
     language = user_data[chat_id]['language']
     if language == 'uk':
-        bot.send_message(chat_id, "Будь ласка, введіть місяць свого народження (1-12):")
+        markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+        skip_button = types.KeyboardButton("Пропустити")
+        markup.add(skip_button)
+        bot.send_message(chat_id, "Будь ласка, введіть місяць свого народження (1-12):", reply_markup=markup)
     elif language == 'en':
-        bot.send_message(chat_id, "Please enter the month of your birth (1-12):")
-    bot.register_next_step_handler(message, get_birth_month)
+        markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+        skip_button = types.KeyboardButton("Skip")
+        markup.add(skip_button)
+        bot.send_message(chat_id, "Please enter the month of your birth (1-12):", reply_markup=markup)
+    bot.register_next_step_handler(message, process_birth_month)
 
-def get_birth_month(message):
+def process_birth_month(message):
     chat_id = message.chat.id
     language = user_data[chat_id]['language']
-    month = message.text
-    if month.isdigit() and 1 <= int(month) <= 12:
-        user_data[chat_id]['birth_month'] = month.zfill(2) # Добавляем ведущий ноль, если нужно
+    if message.text == "Пропустити" or message.text == "Skip":
+        user_data[chat_id]['birth_day'] = "00"
+        user_data[chat_id]['birth_month'] = "00"
+        user_data[chat_id]['birth_year'] = "0000"
+        user_data[chat_id]['birthdate'] = "00/00/0000"
+        ask_phone(message)
+    elif message.text.isdigit() and 1 <= int(message.text) <= 12:
+        user_data[chat_id]['birth_month'] = message.text.zfill(2)
         ask_birth_year(message)
     else:
         if language == 'uk':
             bot.send_message(chat_id, "Невірний формат місяця. Будь ласка, введіть число від 1 до 12.")
         elif language == 'en':
             bot.send_message(chat_id, "Invalid month format. Please enter a number from 1 to 12.")
-        bot.register_next_step_handler(message, get_birth_month)
+        bot.register_next_step_handler(message, process_birth_month)
 
 def ask_birth_year(message):
     chat_id = message.chat.id
-    language = user_data[chat_id]['language']
+    language = user_data.get(chat_id, {}).get('language')
     current_year = datetime.now().year
     if language == 'uk':
-        bot.send_message(chat_id, f"Будь ласка, введіть рік свого народження (1900-{current_year}):")
+        markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+        skip_button = types.KeyboardButton("Пропустити")
+        markup.add(skip_button)
+        bot.send_message(chat_id, f"Будь ласка, введіть рік свого народження (1900-{current_year}):", reply_markup=markup)
     elif language == 'en':
-        bot.send_message(chat_id, f"Please enter the year of your birth (1900-{current_year}):")
-    bot.register_next_step_handler(message, get_birth_year)
+        markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+        skip_button = types.KeyboardButton("Skip")
+        markup.add(skip_button)
+        bot.send_message(chat_id, f"Please enter the year of your birth (1900-{current_year}):", reply_markup=markup)
+    bot.register_next_step_handler(message, process_birth_year)
 
-def get_birth_year(message):
+def process_birth_year(message):
     chat_id = message.chat.id
     language = user_data.get(chat_id, {}).get('language')
-    year = message.text
     current_year = datetime.now().year
-    if year.isdigit() and 1900 <= int(year) <= current_year:
-        user_data[chat_id]['birth_year'] = year
+    if message.text == "Пропустити" or message.text == "Skip":
+        user_data[chat_id]['birth_day'] = "00"
+        user_data[chat_id]['birth_month'] = "00"
+        user_data[chat_id]['birth_year'] = "0000"
+        user_data[chat_id]['birthdate'] = "00/00/0000"
+        ask_phone(message)
+    elif message.text.isdigit() and 1900 <= int(message.text) <= current_year:
+        user_data[chat_id]['birth_year'] = message.text
         user_data[chat_id]['birthdate'] = f"{user_data[chat_id]['birth_day']}/{user_data[chat_id]['birth_month']}/{user_data[chat_id]['birth_year']}"
         user_data[chat_id]['registration_step'] = 'birth_year_received'
         ask_phone(message)
@@ -175,7 +233,7 @@ def get_birth_year(message):
             bot.send_message(chat_id, f"Невірний формат року. Будь ласка, введіть рік від 1900 до {current_year}.")
         elif language == 'en':
             bot.send_message(chat_id, f"Invalid year format. Please enter a year from 1900 to {current_year}.")
-        bot.register_next_step_handler(message, get_birth_year)
+        bot.register_next_step_handler(message, process_birth_year)
 
 def ask_phone(message):
     chat_id = message.chat.id
@@ -188,109 +246,86 @@ def ask_phone(message):
     keyboard = types.ReplyKeyboardMarkup(row_width=1, resize_keyboard=True, one_time_keyboard=True)
     if language == 'uk':
         share_button = types.KeyboardButton(text="Поділитись номером телефону", request_contact=True)
-        keyboard.add(share_button)
-        bot.send_message(chat_id, "Будь ласка, поділіться своїм номером телефону, натиснувши кнопку нижче.", reply_markup=keyboard)
+        skip_button = types.KeyboardButton(text="Пропустити")
+        keyboard.add(share_button, skip_button)
+        bot.send_message(chat_id, "Будь ласка, поділіться своїм номером телефону, натиснувши кнопку нижче, або пропустіть цей крок.", reply_markup=keyboard)
     elif language == 'en':
         share_button = types.KeyboardButton(text="Share phone number", request_contact=True)
-        keyboard.add(share_button)
-        bot.send_message(chat_id, "Please share your phone number by pressing the button below.", reply_markup=keyboard)
-    bot.register_next_step_handler(message, get_phone)
+        skip_button = types.KeyboardButton(text="Skip")
+        keyboard.add(share_button, skip_button)
+        bot.send_message(chat_id, "Please share your phone number by pressing the button below, or skip this step.", reply_markup=keyboard)
+    bot.register_next_step_handler(message, process_phone)
 
-
-    
-@bot.message_handler(content_types=['contact'])
-def get_phone(message):
+def process_phone(message):
     chat_id = message.chat.id
-    if message.contact is not None:
+    language = user_data.get(chat_id, {}).get('language', 'uk')
+    if message.text == "Пропустити" or message.text == "Skip":
+        user_data[chat_id]['phone_number'] = "Не вказано" if language == 'uk' else "Not provided"
+        user_data[chat_id]['registration_step'] = 'phone_received'
+        ask_location_instruction(message)
+    elif message.contact is not None:
         phone_number = message.contact.phone_number
         user_data[chat_id]['phone_number'] = phone_number
-        user_data[chat_id]['registration_step'] = 'phone_received' # Обновляем шаг регистрации
+        user_data[chat_id]['registration_step'] = 'phone_received'
         ask_location_instruction(message)
     else:
-        language = user_data.get(chat_id, {}).get('language', 'uk')
-        bot.send_message(chat_id, "Будь ласка, поділіться своїм номером телефону, натиснувши кнопку." if language == 'uk' else "Please share your phone number by pressing the button.")
-        bot.register_next_step_handler(message, get_phone) # Оставляем обработчик на случай неправильного ввода
+        bot.send_message(chat_id, "Будь ласка, поділіться своїм номером телефону, натиснувши кнопку або пропустіть цей крок." if language == 'uk' else "Please share your phone number by pressing the button or skip this step.")
+        bot.register_next_step_handler(message, process_phone)
 
 def ask_location_instruction(message):
     chat_id = message.chat.id
-    language = user_data[chat_id]['language']
+    language = user_data.get(chat_id, {}).get('language')
     if language == 'uk':
-        location_instruction = "Для участі в марафоні необхідно надати доступ до вашого місцезнаходження.\nБудь ласка, увімкніть геолокацію на своєму пристрої перед тим, як натиснути кнопку «Старт»."
+        bot.send_message(chat_id, "Дякуємо! Тепер, будь ласка, надішліть вашу початкову геолокацію, щоб ми могли зафіксувати початок вашого забігу. "
+                         "Натисніть на кнопку 'Поділитись моєю геолокацією' нижче.",
+                         reply_markup=types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add(
+                             types.KeyboardButton(text="Поділитись моєю геолокацією", request_location=True)))
     elif language == 'en':
-        location_instruction = "To participate in the marathon, you need to grant access to your location.\nPlease enable location services on your device before pressing the «Start» button."
-    bot.send_message(chat_id, location_instruction)
-    ask_start_button(message)
-
-
-def ask_start_button(message):
-    chat_id = message.chat.id
-    language = user_data[chat_id]['language']
-    keyboard = types.ReplyKeyboardMarkup(row_width=1, resize_keyboard=True, one_time_keyboard=True) # Добавили one_time_keyboard=True
-    if language == 'uk':
-        start_button = types.KeyboardButton(text="СТАРТ", request_location=True)
-        start_ready_message = "Коли Ви будете готові розпочати забіг і увімкнете геолокацію, натисніть кнопку Старт."
-    elif language == 'en':
-        start_button = types.KeyboardButton(text="START", request_location=True)
-        start_ready_message = "When you are ready to start the run and have enabled location services, press the Start button."
-    keyboard.add(start_button)
-    sent_message = bot.send_message(chat_id, start_ready_message, reply_markup=keyboard)
-    bot.register_next_step_handler(sent_message, handle_start_location_timeout, chat_id)
-
-def handle_start_location_timeout(message, chat_id):
-    language = user_data[chat_id]['language']
-    if message.content_type != 'location':
-        if 'start_location' not in user_data[chat_id]:
-            keyboard = types.ReplyKeyboardMarkup(row_width=1, resize_keyboard=True)
-            if language == 'uk':
-                retry_button = types.KeyboardButton(text="Повторити СПРОБУ СТАРТ", request_location=True)
-                retry_message = "Будь ласка, надайте доступ до вашого місцезнаходження, щоб розпочати забіг.\nПеревірте налаштування Telegram та увімкніть геолокацію."
-            elif language == 'en':
-                retry_button = types.KeyboardButton(text="Retry START", request_location=True)
-                retry_message = "Please grant access to your location to start the run.\nCheck your Telegram settings and enable location services."
-            keyboard.add(retry_button)
-            bot.send_message(chat_id, retry_message, reply_markup=keyboard)
-            bot.register_next_step_handler(message, handle_start_location)
-    else:
-        handle_start_location(message)
-
+        bot.send_message(chat_id, "Thank you! Now, please send your starting geolocation so we can record the start of your run. "
+                         "Press the 'Share my location' button below.",
+                         reply_markup=types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add(
+                             types.KeyboardButton(text="Share my location", request_location=True)))
+    bot.register_next_step_handler(message, handle_start_location)
 
 @bot.message_handler(content_types=['location'])
 def handle_start_location(message):
     chat_id = message.chat.id
+    print(f"Получена стартовая геолокация для {chat_id}")
+
     if message.location is not None:
+        print(f"Стартовая геолокация получена: {message.location.latitude}, {message.location.longitude}")
         start_latitude = message.location.latitude
         start_longitude = message.location.longitude
         start_time = datetime.now()
         user_data[chat_id]['start_location'] = (start_latitude, start_longitude)
         user_data[chat_id]['start_time'] = start_time.strftime("%Y-%m-%d %H:%M:%S")
-        ask_finish_readiness(message)
 
-def ask_finish_readiness(message):
-    chat_id = message.chat.id
-    language = user_data[chat_id]['language']
-    keyboard = types.ReplyKeyboardMarkup(row_width=1, resize_keyboard=True)
-    if language == 'uk':
-        finish_button = types.KeyboardButton(text="ФІНІШ", request_location=True)
-        finish_ready_message = "Коли завершите забіг, натисніть кнопку «ФІНІШ»."
-    elif language == 'en':
-        finish_button = types.KeyboardButton(text="FINISH", request_location=True)
-        finish_ready_message = "When you finish the run, press the «FINISH» button."
-    keyboard.add(finish_button)
-    sent_message = bot.send_message(chat_id, finish_ready_message, reply_markup=keyboard)
-    bot.register_next_step_handler(sent_message, handle_finish_location)
+        language = user_data[chat_id]['language']
+        bot.send_message(chat_id, "Чудово! Ваша стартова геолокація успішно збережена. "
+                         "Тепер, будь ласка, надішліть вашу кінцеву геолокацію, коли завершите забіг."
+                         if language == 'uk' else
+                         "Great! Your starting geolocation has been successfully saved. "
+                         "Now, please send your final geolocation when you finish your run.",
+                         reply_markup=types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add(
+                             types.KeyboardButton(text="Поділитись моєю геолокацією", request_location=True)
+                             if language == 'uk' else
+                             types.KeyboardButton(text="Share my location", request_location=True)
+                         ),
+                         timeout=LOCATION_REQUEST_TIMEOUT)
 
-@bot.callback_query_handler(func=lambda call: call.data == 'already_registered')
-def handle_already_registered(call):
-    chat_id = call.message.chat.id
-    language = user_data[chat_id]['language']
-    bot.send_message(chat_id, "🇺🇦🇺🇦 Героям Слава! 🇺🇦🇺🇦" if language == 'uk' else "🇺🇦🇺🇦 Glory to the heroes! 🇺🇦🇺🇦", reply_markup=types.ReplyKeyboardRemove())
-
+        bot.register_next_step_handler(message, handle_finish_location)
+    else:
+        print(f"Стартовая геолокация не получена для {chat_id}")
+        bot.send_message(chat_id, "Будь ласка, надайте доступ до вашого місцезнаходження."
+                         if language == 'uk' else
+                         "Please grant access to your location.")
+        bot.register_next_step_handler(message, handle_start_location)
 
 @bot.message_handler(content_types=['location'])
 def handle_finish_location(message):
     chat_id = message.chat.id
     print(f"Получена геолокация для {chat_id}")
-    
+
     if message.location is not None:
         print(f"Геолокация получена: {message.location.latitude}, {message.location.longitude}")
         finish_latitude = message.location.latitude
@@ -298,27 +333,26 @@ def handle_finish_location(message):
         finish_time = datetime.now()
         user_data[chat_id]['finish_location'] = (finish_latitude, finish_longitude)
         user_data[chat_id]['finish_time'] = finish_time.strftime("%Y-%m-%d %H:%M:%S")
-        
+
         start_location = user_data[chat_id].get('start_location')
         print(f"Данные о старте: {start_location}")
-        
+
         if start_location:
             start_lat, start_lon = start_location
             distance = calculate_distance(start_lat, start_lon, finish_latitude, finish_longitude)
             print(f"Расчет дистанции завершен: {distance} км")
             user_data[chat_id]['distance'] = distance
-            distance_km = round(distance, 2)
             language = user_data[chat_id]['language']
-            finish_message = f"🇺🇦 Ваш забіг завершено! Подолана дистанція: {distance_km} км. Дякуємо за участь у «Марафоні Героїв»! 🇺🇦" if language == 'uk' else f"🇺🇦 Your run is finished! Distance covered: {distance_km} km. Thank you for participating in the «Heroes Marathon»! 🇺🇦"
+            finish_message = "🇺🇦 Ваш забіг завершено! Дякуємо за участь у «Марафоні Героїв»! 🇺🇦" if language == 'uk' else "🇺🇦 Your run is finished! Thank you for participating in the «Heroes Marathon»! 🇺🇦"
             bot.send_message(chat_id, finish_message, reply_markup=types.ReplyKeyboardRemove())
-            
+
             website_message = "Щоб отримати сертифікат про участь у марафоні та нагороди, потрібно зареєструватись на нашому сайті. Для цього натисніть кнопку нижче (для кращої роботи рекомендуємо відкрити у зовнішньому браузері)." if language == 'uk' else "To receive a certificate of participation in the marathon and a reward, you need to register on our website. To do this, press the button below (for better performance, we recommend opening in an external browser)."
             markup_inline = types.InlineKeyboardMarkup()
             website_button = types.InlineKeyboardButton(text="Перейти на сайт" if language == 'uk' else "Go to website", url=UKRAINIAN_RUN_URL if language == 'uk' else ENGLISH_RUN_URL)
             already_registered_button = types.InlineKeyboardButton(text="Вже зареєструвався" if language == 'uk' else "Already registered", callback_data='already_registered')
             markup_inline.add(website_button, already_registered_button)
             bot.send_message(chat_id, website_message, reply_markup=markup_inline)
-            
+
             # Запис даних у базу даних PostgreSQL
         DATABASE_URL = os.environ.get('DATABASE_URL')
         try:
@@ -373,8 +407,19 @@ def handle_finish_location(message):
         print(f"Геолокация не получена для {chat_id}")
         bot.send_message(chat_id, "Будь ласка, надайте доступ до вашого місцезнаходження." if language == 'uk' else "Please grant access to your location.")
 
+@bot.callback_query_handler(func=lambda call: call.data == 'already_registered')
+def already_registered(call):
+    chat_id = call.message.chat.id
+    language = user_data[chat_id]['language']
+    bot.send_message(chat_id, "Будь ласка, поділіться своєю початковою геолокацією, щоб ми могли зафіксувати початок вашого забігу."
+                     if language == 'uk' else
+                     "Please share your starting geolocation so we can record the start of your run.",
+                     reply_markup=types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add(
+                         types.KeyboardButton(text="Поділитись моєю геолокацією", request_location=True)
+                         if language == 'uk' else
+                         types.KeyboardButton(text="Share my location", request_location=True)
+                     ))
+    bot.register_next_step_handler(call.message, handle_start_location)
 
-
-     
 if __name__ == '__main__':
-    bot.infinity_polling()
+    bot.polling(none_stop=True)
